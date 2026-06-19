@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Plus, CreditCard, AlertCircle } from "lucide-react";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { getCurrentUser, createClient } from "@/lib/supabase/server";
 import {
   getMyListings,
@@ -13,21 +14,23 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BookingStatusBadge } from "@/components/booking-status-badge";
 import { formatCents, formatDateRange } from "@/lib/utils";
-import { categoryLabel } from "@/lib/constants";
 import type { BookingWithRelations } from "@/types";
+import type { ListingCategory } from "@/types/database";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Tableau de bord" };
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?redirect=/dashboard");
 
   const supabase = await createClient();
-  const [{ data: profile }, listings, asRenter, asLender] = await Promise.all([
+  const [{ data: profile }, listings, asRenter, asLender, t, tc] = await Promise.all([
     supabase.from("profiles").select("stripe_onboarded, stripe_account_id").eq("id", user.id).single(),
     getMyListings(user.id),
     getBookingsAsRenter(user.id),
     getBookingsAsLender(user.id),
+    getTranslations("dashboard"),
+    getTranslations("categories"),
   ]);
 
   const needsStripe = !profile?.stripe_onboarded;
@@ -35,10 +38,10 @@ export default async function DashboardPage() {
   return (
     <div className="container space-y-6 py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <Button asChild>
           <Link href="/listings/new">
-            <Plus className="h-4 w-4" /> New listing
+            <Plus className="h-4 w-4" /> {t("newListing")}
           </Link>
         </Button>
       </div>
@@ -47,27 +50,24 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-center gap-3 text-amber-800">
             <CreditCard className="h-5 w-5" />
-            <p className="text-sm">
-              Connect Stripe to receive payouts before you can accept bookings.
-            </p>
+            <p className="text-sm">{t("stripeWarning")}</p>
           </div>
           <Button asChild size="sm" variant="outline">
-            <Link href="/onboarding">Connect payouts</Link>
+            <Link href="/onboarding">{t("stripeConnect")}</Link>
           </Button>
         </div>
       )}
 
       <Tabs defaultValue="listings">
         <TabsList>
-          <TabsTrigger value="listings">My listings ({listings.length})</TabsTrigger>
-          <TabsTrigger value="renting">Renting ({asRenter.length})</TabsTrigger>
-          <TabsTrigger value="lending">Lending ({asLender.length})</TabsTrigger>
+          <TabsTrigger value="listings">{t("myListings", { count: listings.length })}</TabsTrigger>
+          <TabsTrigger value="renting">{t("renting", { count: asRenter.length })}</TabsTrigger>
+          <TabsTrigger value="lending">{t("lending", { count: asLender.length })}</TabsTrigger>
         </TabsList>
 
-        {/* My listings */}
         <TabsContent value="listings">
           {listings.length === 0 ? (
-            <Empty text="You haven't listed anything yet." cta={{ href: "/listings/new", label: "Create a listing" }} />
+            <Empty text={t("emptyListings")} cta={{ href: "/listings/new", label: t("createListing") }} />
           ) : (
             <div className="divide-y rounded-xl border">
               {listings.map((l) => (
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
                   <div className="flex-1">
                     <p className="font-medium">{l.title}</p>
                     <p className="text-sm text-muted-foreground">
-                      {categoryLabel(l.category)} · {formatCents(l.price_per_day)}/day
+                      {tc(l.category as ListingCategory)} · {formatCents(l.price_per_day)}{t("perDay")}
                     </p>
                   </div>
                   <Badge variant={l.status === "active" ? "success" : "outline"}>{l.status}</Badge>
@@ -90,14 +90,12 @@ export default async function DashboardPage() {
           )}
         </TabsContent>
 
-        {/* Renting */}
         <TabsContent value="renting">
-          <BookingList bookings={asRenter} emptyText="You haven't rented anything yet." perspective="renter" />
+          <BookingList bookings={asRenter} emptyText={t("emptyRenting")} perspective="renter" />
         </TabsContent>
 
-        {/* Lending */}
         <TabsContent value="lending">
-          <BookingList bookings={asLender} emptyText="No booking requests yet." perspective="lender" />
+          <BookingList bookings={asLender} emptyText={t("emptyLending")} perspective="lender" />
         </TabsContent>
       </Tabs>
     </div>

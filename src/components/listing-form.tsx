@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Upload, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { createListing } from "@/app/actions/listings";
 import { listingSchema, type ListingInput } from "@/lib/validations";
@@ -20,9 +21,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const STEPS = ["Details", "Pricing & location", "Photos"] as const;
-
 export function ListingForm() {
+  const t = useTranslations("listing");
+  const tc = useTranslations("categories");
+  const ts = useTranslations("segments");
+
+  const STEPS = [t("steps.details"), t("steps.pricing"), t("steps.photos")] as const;
+
   const [step, setStep] = useState(0);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -57,7 +62,7 @@ export function ListingForm() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      setServerError("Your session expired. Please log in again.");
+      setServerError(t("sessionExpired"));
       setUploading(false);
       return;
     }
@@ -70,7 +75,7 @@ export function ListingForm() {
         upsert: false,
       });
       if (error) {
-        setServerError(`Upload failed: ${error.message}`);
+        setServerError(t("uploadFailed", { error: error.message }));
         continue;
       }
       const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
@@ -102,7 +107,6 @@ export function ListingForm() {
     setServerError(null);
     const res = await createListing(values);
     if (res?.error) setServerError(res.error);
-    // On success the action redirects.
   }
 
   return (
@@ -112,11 +116,22 @@ export function ListingForm() {
         {STEPS.map((label, i) => (
           <li
             key={label}
-            className={`flex-1 rounded-md border px-3 py-2 text-center ${
-              i === step ? "border-primary font-medium text-primary" : "text-muted-foreground"
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-center transition-colors ${
+              i === step
+                ? "border-primary bg-primary/5 font-semibold text-primary"
+                : i < step
+                  ? "border-primary/40 text-primary/80"
+                  : "text-muted-foreground"
             }`}
           >
-            {i + 1}. {label}
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                i <= step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {i + 1}
+            </span>
+            {label}
           </li>
         ))}
       </ol>
@@ -124,18 +139,18 @@ export function ListingForm() {
       {/* Step 1 */}
       {step === 0 && (
         <div className="space-y-4">
-          <Field label="Title" error={errors.title?.message}>
-            <Input {...register("title")} placeholder="Bosch professional hammer drill" />
+          <Field label={t("titleLabel")} error={errors.title?.message}>
+            <Input {...register("title")} placeholder={t("titlePlaceholder")} />
           </Field>
-          <Field label="Description" error={errors.description?.message}>
+          <Field label={t("descLabel")} error={errors.description?.message}>
             <Textarea
               {...register("description")}
               rows={5}
-              placeholder="Condition, what's included, pickup details…"
+              placeholder={t("descPlaceholder")}
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Category" error={errors.category?.message}>
+            <Field label={t("categoryLabel")} error={errors.category?.message}>
               <Select
                 defaultValue={watch("category")}
                 onValueChange={(v) => setValue("category", v as ListingInput["category"])}
@@ -143,12 +158,12 @@ export function ListingForm() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CATEGORIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.emoji} {c.label}</SelectItem>
+                    <SelectItem key={c.value} value={c.value}>{c.emoji} {tc(c.value)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Segment" error={errors.segment?.message}>
+            <Field label={t("segmentLabel")} error={errors.segment?.message}>
               <Select
                 defaultValue={watch("segment")}
                 onValueChange={(v) => setValue("segment", v as ListingInput["segment"])}
@@ -156,7 +171,7 @@ export function ListingForm() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {SEGMENTS.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    <SelectItem key={s.value} value={s.value}>{ts(s.value)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -169,34 +184,31 @@ export function ListingForm() {
       {step === 1 && (
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Price per day (€)" error={errors.pricePerDay?.message}>
+            <Field label={t("pricePerDay")} error={errors.pricePerDay?.message}>
               <Input type="number" step="0.01" min="0" {...register("pricePerDay")} />
             </Field>
-            <Field label="Security deposit (€)" error={errors.depositAmount?.message}>
+            <Field label={t("deposit")} error={errors.depositAmount?.message}>
               <Input type="number" step="0.01" min="0" {...register("depositAmount")} />
             </Field>
           </div>
-          <Field label="City" error={errors.city?.message}>
+          <Field label={t("cityLabel")} error={errors.city?.message}>
             <Input {...register("city")} placeholder="Lyon" />
           </Field>
-          <p className="text-xs text-muted-foreground">
-            The deposit is held on the renter&apos;s card as an authorization and released
-            after a successful return — it is not charged unless there&apos;s a dispute.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("depositNote")}</p>
         </div>
       )}
 
       {/* Step 3 */}
       {step === 2 && (
         <div className="space-y-4">
-          <Label>Photos</Label>
+          <Label>{t("photosLabel")}</Label>
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-8 text-center text-muted-foreground hover:bg-accent">
             {uploading ? (
               <Loader2 className="h-6 w-6 animate-spin" />
             ) : (
               <Upload className="h-6 w-6" />
             )}
-            <span className="text-sm">Click to upload images</span>
+            <span className="text-sm">{t("uploadPhotos")}</span>
             <input
               type="file"
               accept="image/*"
@@ -235,16 +247,16 @@ export function ListingForm() {
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
         >
-          Back
+          {t("back")}
         </Button>
         {step < STEPS.length - 1 ? (
           <Button type="button" onClick={next}>
-            Continue
+            {t("continue")}
           </Button>
         ) : (
           <Button type="submit" disabled={isSubmitting || uploading}>
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Publish listing
+            {t("publish")}
           </Button>
         )}
       </div>

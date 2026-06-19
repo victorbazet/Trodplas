@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LayoutDashboard, LogOut, Package, Settings, CreditCard } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ email, fullName, avatarUrl }: UserMenuProps) {
+  const t = useTranslations("userMenu");
   const initials = (fullName ?? email).slice(0, 2).toUpperCase();
 
   return (
@@ -35,29 +37,29 @@ export function UserMenu({ email, fullName, avatarUrl }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/dashboard">
-            <LayoutDashboard className="h-4 w-4" /> Dashboard
+            <LayoutDashboard className="h-4 w-4" /> {t("dashboard")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/listings/new">
-            <Package className="h-4 w-4" /> List an item
+            <Package className="h-4 w-4" /> {t("listItem")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/onboarding">
-            <CreditCard className="h-4 w-4" /> Payouts (Stripe)
+            <CreditCard className="h-4 w-4" /> {t("payouts")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dashboard/settings">
-            <Settings className="h-4 w-4" /> Settings
+            <Settings className="h-4 w-4" /> {t("settings")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <form action={signOut}>
           <button type="submit" className="w-full">
             <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
-              <LogOut className="h-4 w-4" /> Log out
+              <LogOut className="h-4 w-4" /> {t("logout")}
             </DropdownMenuItem>
           </button>
         </form>

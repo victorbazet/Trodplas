@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useTranslations } from "next-intl";
 import { updateProfile } from "@/app/actions/profile";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,25 +17,26 @@ export function SettingsForm({
   defaultBio: string;
   email: string;
 }) {
+  const t = useTranslations("settings");
   const [state, formAction] = useActionState(updateProfile, undefined);
 
   return (
     <form action={formAction} className="space-y-4 rounded-xl border p-4">
       <div className="space-y-1.5">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("email")}</Label>
         <Input id="email" value={email} disabled />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="fullName">Full name</Label>
+        <Label htmlFor="fullName">{t("fullName")}</Label>
         <Input id="fullName" name="fullName" defaultValue={defaultFullName} required />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="bio">Bio</Label>
+        <Label htmlFor="bio">{t("bio")}</Label>
         <Textarea id="bio" name="bio" defaultValue={defaultBio} rows={4} />
       </div>
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
-      {state?.ok && <p className="text-sm text-emerald-700">Saved.</p>}
-      <SubmitButton>Save changes</SubmitButton>
+      {state?.ok && <p className="text-sm text-emerald-700">{t("saved")}</p>}
+      <SubmitButton>{t("saveChanges")}</SubmitButton>
     </form>
   );
 }

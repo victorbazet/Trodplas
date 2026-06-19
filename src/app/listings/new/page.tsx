@@ -6,7 +6,7 @@ export default function NewListingPage() {
   return (
     <div className="container max-w-2xl py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">List an item</h1>
+        <h1 className="text-3xl font-bold tracking-tight">List an item</h1>
         <p className="text-muted-foreground">
           Share what takes up too much space and start earning.
         </p>

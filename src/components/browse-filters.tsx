@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,10 @@ import { CATEGORIES, SEGMENTS } from "@/lib/constants";
 
 const ANY = "any";
 
-/** Client-side filter bar that writes the chosen filters into the URL query. */
 export function BrowseFilters() {
+  const t = useTranslations("browse");
+  const tc = useTranslations("categories");
+  const ts = useTranslations("segments");
   const router = useRouter();
   const params = useSearchParams();
 
@@ -32,19 +35,19 @@ export function BrowseFilters() {
   );
 
   return (
-    <div className="grid gap-4 rounded-xl border p-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="surface grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-5">
       <div className="space-y-1.5">
-        <Label>Category</Label>
+        <Label>{t("category")}</Label>
         <Select
           value={params.get("category") ?? ANY}
           onValueChange={(v) => update("category", v)}
         >
-          <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder={t("any")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ANY}>Any</SelectItem>
+            <SelectItem value={ANY}>{t("any")}</SelectItem>
             {CATEGORIES.map((c) => (
               <SelectItem key={c.value} value={c.value}>
-                {c.emoji} {c.label}
+                {c.emoji} {tc(c.value)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -52,27 +55,27 @@ export function BrowseFilters() {
       </div>
 
       <div className="space-y-1.5">
-        <Label>Segment</Label>
+        <Label>{t("segment")}</Label>
         <Select
           value={params.get("segment") ?? ANY}
           onValueChange={(v) => update("segment", v)}
         >
-          <SelectTrigger><SelectValue placeholder="Any" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder={t("any")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value={ANY}>Any</SelectItem>
+            <SelectItem value={ANY}>{t("any")}</SelectItem>
             {SEGMENTS.map((s) => (
-              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              <SelectItem key={s.value} value={s.value}>{ts(s.value)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="city">City</Label>
+        <Label htmlFor="city">{t("city")}</Label>
         <Input
           id="city"
           defaultValue={params.get("city") ?? ""}
-          placeholder="e.g. Lyon"
+          placeholder={t("cityPlaceholder")}
           onBlur={(e) => update("city", e.target.value || null)}
           onKeyDown={(e) => {
             if (e.key === "Enter") update("city", (e.target as HTMLInputElement).value || null);
@@ -81,7 +84,7 @@ export function BrowseFilters() {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="start">From</Label>
+        <Label htmlFor="start">{t("from")}</Label>
         <Input
           id="start"
           type="date"
@@ -91,7 +94,7 @@ export function BrowseFilters() {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="end">To</Label>
+        <Label htmlFor="end">{t("to")}</Label>
         <div className="flex gap-2">
           <Input
             id="end"
@@ -100,7 +103,7 @@ export function BrowseFilters() {
             onChange={(e) => update("endDate", e.target.value || null)}
           />
           <Button variant="ghost" onClick={() => router.push("/browse")}>
-            Reset
+            {t("reset")}
           </Button>
         </div>
       </div>
